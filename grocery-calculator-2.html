@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CA vs TX — Cost of Living Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --font:"Danske Text","DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  --bg:#FFFFFF;--bg2:#F8F9FA;--bg3:#F1F3F4;
+  --blue:#1A73E8;--blue-h:#1557B0;--blue-t:#E8F0FE;
+  --tp:#202124;--tb:#3C4043;--tm:#5F6368;--tf:#80868B;--tg:#BDC1C6;
+  --bdr:#DADCE0;--bdr2:#E8EAED;
+  --green:#137333;--gbg:#E6F4EA;
+  --red:#C5221F;--rbg:#FCE8E6;
+  --foot:#202124;
+  --sh1:0 1px 4px rgba(0,0,0,.06);--sh2:0 4px 16px rgba(0,0,0,.10);
+  --r2:6px;--r3:12px;--rp:100px;
+  --grad:linear-gradient(90deg,#b84dc6 0%,#479ef5 100%);
+  --gradd:linear-gradient(135deg,#b84dc6 0%,#479ef5 100%);
+  --t:200ms ease;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font);background:var(--bg);color:var(--tb);font-size:15px;font-weight:400;line-height:1.6;-webkit-font-smoothing:antialiased;}
+.gt{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;}
+.eyebrow{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;display:inline-block;margin-bottom:10px;line-height:1;}
+.g-hr{height:2px;background:var(--grad);border:none;border-radius:2px;margin:0;}
+.container{max-width:1200px;margin:0 auto;padding:0 40px;}
+
+/* NAV */
+nav{height:60px;background:var(--bg);border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 40px;}
+.nav-logo{font-size:15px;font-weight:600;color:var(--tp);}
+.nav-tag{margin-left:12px;padding:3px 10px;background:var(--bg3);border-radius:var(--rp);font-size:11px;color:var(--tm);font-weight:500;}
+
+/* HERO — left-aligned two-col layout */
+.hero{padding:52px 0 44px;background:var(--bg);}
+.hero-layout{display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:start;}
+.hero-left{}
+.hero-left h1{font-size:34px;font-weight:400;color:var(--tp);line-height:1.2;letter-spacing:-.02em;margin-bottom:14px;}
+.hero-left p{font-size:15px;color:var(--tm);line-height:1.65;margin-bottom:20px;max-width:520px;}
+.feature-pills{display:flex;gap:6px;flex-wrap:wrap;}
+.fpill{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--bdr);border-radius:var(--rp);font-size:12px;color:var(--tb);}
+.fpill-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+
+/* SALARY CARD */
+.salary-card{background:var(--gradd);border-radius:var(--r3);padding:2px;box-shadow:0 4px 20px rgba(184,77,198,.15);}
+.salary-card-inner{background:var(--bg);border-radius:10px;padding:28px;}
+.salary-card-inner h3{font-size:15px;font-weight:500;color:var(--tp);margin-bottom:3px;}
+.salary-card-inner .sc-sub{font-size:12px;color:var(--tm);margin-bottom:20px;}
+.salary-field label{display:block;font-size:11px;font-weight:500;color:var(--tm);margin-bottom:5px;letter-spacing:.01em;text-transform:uppercase;}
+.salary-input-wrap{position:relative;margin-bottom:10px;}
+.salary-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:500;color:var(--tm);}
+#salary-input{width:100%;height:46px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r2);padding:0 14px 0 26px;font-family:var(--font);font-size:20px;font-weight:600;color:var(--tp);outline:none;transition:border-color var(--t),box-shadow var(--t);}
+#salary-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,115,232,.12);}
+.salary-note{font-size:10px;color:var(--tf);line-height:1.5;}
+/* quick result inside salary card */
+.salary-quick{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);display:none;}
+.salary-quick.show{display:block;}
+.sq-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.sq-label{font-size:12px;color:var(--tm);}
+.sq-val{font-size:13px;font-weight:600;color:var(--tp);}
+.sq-val.blue{color:var(--blue);}
+.sq-advantage{margin-top:10px;padding:10px 12px;background:var(--gbg);border-radius:var(--r2);text-align:center;}
+.sq-advantage span{font-size:13px;font-weight:600;color:var(--green);}
+.sq-advantage p{font-size:11px;color:var(--tm);margin-top:2px;}
+
+/* TAKE-HOME COLLAPSIBLE */
+.th-section{background:var(--bg2);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);display:none;}
+.th-section.visible{display:block;}
+.th-toggle{width:100%;background:transparent;border:none;padding:16px 40px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:var(--font);}
+.th-toggle-left{display:flex;align-items:center;gap:10px;}
+.th-toggle-label{font-size:14px;font-weight:500;color:var(--tp);}
+.th-toggle-sub{font-size:12px;color:var(--tm);}
+.th-chevron{font-size:16px;color:var(--tm);transition:transform var(--t);}
+.th-toggle.open .th-chevron{transform:rotate(180deg);}
+.th-body{display:none;padding:0 40px 32px;}
+.th-body.open{display:block;}
+.th-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+.th-card{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r3);padding:24px;box-shadow:var(--sh1);}
+.th-card-title{font-size:12px;font-weight:600;color:var(--tm);letter-spacing:.04em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:7px;}
+.city-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.city-dot.ca-dot{background:#b84dc6;}
+.city-dot.tx-dot{background:#479ef5;}
+.th-rows{display:flex;flex-direction:column;gap:8px;}
+.th-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:var(--r2);background:var(--bg2);}
+.th-row.hl{background:var(--blue-t);border:1px solid var(--blue);}
+.th-rl{font-size:13px;color:var(--tb);}
+.th-rl small{display:block;font-size:10px;color:var(--tm);}
+.th-rv{font-size:14px;font-weight:600;color:var(--tp);}
+.th-rv.red{color:var(--red);}
+.th-rv.green{color:var(--green);}
+.th-rv.blue{color:var(--blue);}
+
+/* PIE CHARTS */
+.charts-wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.chart-card{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r3);padding:24px;box-shadow:var(--sh1);}
+.chart-card h3{font-size:13px;font-weight:500;color:var(--tp);margin-bottom:16px;display:flex;align-items:center;gap:7px;}
+.chart-body{display:flex;gap:20px;align-items:center;}
+.chart-canvas-wrap{width:160px;height:160px;flex-shrink:0;}
+.chart-legend{flex:1;display:flex;flex-direction:column;gap:7px;}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:12px;}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.leg-name{color:var(--tb);flex:1;}
+.leg-val{font-weight:500;color:var(--tp);}
+.leg-pct{font-size:10px;color:var(--tm);margin-left:2px;}
+
+/* SURPLUS BOXES */
+.surplus-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:24px;}
+.sbox{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r3);padding:22px 20px;box-shadow:var(--sh1);}
+.sbox.featured{padding:2px;background:var(--gradd);border:none;}
+.sbox-inner{background:var(--bg);border-radius:10px;padding:20px 18px;height:100%;}
+.slabel{font-size:12px;color:var(--tm);margin-bottom:6px;line-height:1.4;}
+.snum{font-size:26px;font-weight:600;line-height:1;color:var(--tp);letter-spacing:-.02em;}
+.snum.pos{color:var(--green);}
+.snum.neg{color:var(--red);}
+.snum.zero{color:var(--tg);}
+.snum.gn{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;}
+.snum-sub{font-size:11px;color:var(--tm);margin-top:4px;}
+
+/* SECTION HEADER */
+.sec-hdr{padding:40px 0 24px;}
+.sec-hdr h2{font-size:20px;font-weight:500;color:var(--tp);margin-bottom:5px;}
+.sec-hdr p{font-size:13px;color:var(--tm);}
+
+/* FIXED EXPENSES TABLE */
+.fx-wrap{overflow-x:auto;}
+.fx-table{width:100%;border-collapse:collapse;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r3);overflow:hidden;box-shadow:var(--sh1);}
+.fx-table thead tr{background:var(--bg3);border-bottom:1px solid var(--bdr);}
+.fx-table th{padding:11px 18px;text-align:left;font-size:11px;font-weight:500;color:var(--tm);letter-spacing:.03em;white-space:nowrap;text-transform:uppercase;}
+.fx-table th.r{text-align:right;}
+.fx-table tbody tr{border-bottom:1px solid var(--bdr2);transition:background var(--t);}
+.fx-table tbody tr:last-child{border-bottom:none;}
+.fx-table tbody tr:hover{background:var(--blue-t);}
+.fx-table tbody tr.total-row{background:var(--bg2);border-top:2px solid var(--bdr);}
+.fx-table td{padding:11px 18px;font-size:13px;color:var(--tb);vertical-align:middle;line-height:1.4;}
+.fx-table td.r{text-align:right;font-weight:500;color:var(--tp);white-space:nowrap;}
+.fxs{display:inline-block;padding:2px 8px;border-radius:var(--rp);font-size:11px;font-weight:500;background:var(--gbg);color:var(--green);}
+.fxh{display:inline-block;padding:2px 8px;border-radius:var(--rp);font-size:11px;font-weight:500;background:var(--rbg);color:var(--red);}
+.fxn{color:var(--tg);font-size:12px;}
+.fn{font-size:10px;color:var(--tf);margin-top:2px;}
+
+/* GROCERY SECTION */
+.grocery-hdr{padding:40px 0 0;}
+.grocery-hdr h2{font-size:20px;font-weight:500;color:var(--tp);margin-bottom:5px;}
+.grocery-hdr p{font-size:13px;color:var(--tm);margin-bottom:24px;}
+
+/* FILTER BAR */
+.fbar{background:var(--bg2);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);padding:12px 40px;}
+.fbar-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.sw{position:relative;min-width:180px;max-width:240px;flex:1;}
+.sw input{width:100%;height:36px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r2);padding:0 12px 0 32px;font-family:var(--font);font-size:13px;color:var(--tp);outline:none;transition:border-color var(--t),box-shadow var(--t);}
+.sw input::placeholder{color:var(--tg);}
+.sw input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,115,232,.12);}
+.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tg);font-size:15px;pointer-events:none;}
+.tc{display:flex;flex-wrap:wrap;gap:6px;}
+.tp{padding:4px 12px;border-radius:var(--rp);border:1px solid var(--bdr);font-size:12px;color:var(--tb);background:var(--bg);cursor:pointer;transition:all var(--t);white-space:nowrap;font-family:var(--font);}
+.tp:hover{border-color:var(--blue);color:var(--blue);background:var(--bg2);}
+.tp.active{background:var(--blue-t);border-color:var(--blue);color:var(--blue);font-weight:500;}
+.rbtn{margin-left:auto;padding:6px 16px;background:transparent;border:1px solid var(--bdr);border-radius:var(--r2);font-family:var(--font);font-size:12px;font-weight:500;color:var(--tm);cursor:pointer;transition:all var(--t);}
+.rbtn:hover{border-color:var(--red);color:var(--red);background:var(--rbg);}
+
+/* GROCERY TABLE */
+.tsec{background:var(--bg);}
+.tinner{max-width:1200px;margin:0 auto;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid var(--bdr);background:var(--bg2);}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:500;color:var(--tm);letter-spacing:.03em;white-space:nowrap;text-transform:uppercase;}
+th:first-child{padding-left:40px;width:40px;}
+th.r{text-align:right;}
+tbody tr{border-bottom:1px solid var(--bdr2);transition:background var(--t);}
+tbody tr.hidden{display:none;}
+tbody tr:nth-child(odd){background:var(--bg);}
+tbody tr:nth-child(even){background:#FAFBFC;}
+tbody tr:hover{background:var(--blue-t);}
+tbody tr.summary-row{background:var(--bg2)!important;border-top:2px solid var(--bdr);}
+td{padding:9px 14px;font-size:13px;color:var(--tb);vertical-align:middle;line-height:1.4;}
+td:first-child{padding-left:40px;}
+.inum{font-size:11px;color:var(--tg);display:inline-block;width:22px;}
+.iname{color:var(--tp);}
+.ctag{display:inline-block;padding:2px 8px;border-radius:var(--rp);font-size:11px;font-weight:500;background:var(--bg3);color:var(--tm);white-space:nowrap;}
+.pc{font-size:12px;color:var(--tm);text-align:right;white-space:nowrap;}
+.qc{text-align:right;}
+.qw{display:inline-flex;align-items:center;border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden;}
+.qbtn{width:26px;height:28px;background:var(--bg);border:none;color:var(--tm);font-size:15px;cursor:pointer;transition:all var(--t);display:flex;align-items:center;justify-content:center;font-family:var(--font);}
+.qbtn:hover{background:var(--blue-t);color:var(--blue);}
+.qin{width:36px;text-align:center;background:var(--bg);border:none;border-left:1px solid var(--bdr);border-right:1px solid var(--bdr);color:var(--tp);font-family:var(--font);font-size:12px;font-weight:500;padding:3px 2px;height:28px;outline:none;-moz-appearance:textfield;}
+.qin::-webkit-outer-spin-button,.qin::-webkit-inner-spin-button{-webkit-appearance:none;}
+.sc{font-size:13px;font-weight:500;color:var(--tp);text-align:right;white-space:nowrap;}
+.dc{text-align:right;white-space:nowrap;min-width:100px;}
+.dbadge{display:inline-block;padding:2px 8px;border-radius:var(--rp);font-size:11px;font-weight:500;}
+.dbadge.cheaper{background:var(--gbg);color:var(--green);}
+.dbadge.pricier{background:var(--rbg);color:var(--red);}
+.dzero{color:var(--tg);font-size:12px;}
+
+/* GROCERY SUMMARY STRIP */
+.groc-summary{background:var(--bg2);border-top:1px solid var(--bdr);padding:20px 40px;}
+.groc-sum-inner{max-width:1200px;margin:0 auto;display:flex;gap:24px;flex-wrap:wrap;align-items:center;}
+.gsbox{display:flex;flex-direction:column;gap:3px;}
+.gsbox-label{font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;}
+.gsbox-val{font-size:20px;font-weight:600;color:var(--tp);letter-spacing:-.01em;}
+.gsbox-val.gv-ca{color:#b84dc6;}
+.gsbox-val.gv-tx{color:#479ef5;}
+.gsbox-val.gv-save{color:var(--green);}
+.gsbox-divider{width:1px;background:var(--bdr);align-self:stretch;}
+
+/* FOOTER */
+footer{background:var(--foot);padding:36px 40px 24px;}
+.footer-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:14px;border-top:1px solid #3C4043;}
+footer p{font-size:11px;color:#5F6368;}
+footer span{font-size:11px;color:#9AA0A6;}
+
+@media(max-width:1000px){
+  .hero-layout{grid-template-columns:1fr;}
+  .salary-card{max-width:480px;}
+  .th-grid,.charts-wrap,.surplus-grid{grid-template-columns:1fr;}
+  .sbox.featured{grid-column:span 1;}
+}
+@media(max-width:640px){
+  .container{padding:0 20px;}
+  nav,.fbar,.groc-summary,footer{padding-left:20px;padding-right:20px;}
+  th:first-child,td:first-child{padding-left:20px;}
+  .hero-left h1{font-size:26px;}
+  .th-toggle,.th-body{padding-left:20px;padding-right:20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">CA vs TX</span>
+  <span class="nav-tag">Cost of Living Calculator</span>
+</nav>
+
+<!-- HERO -->
+<section style="background:var(--bg);border-bottom:1px solid var(--bdr);padding-bottom:44px;">
+<div class="container">
+  <div class="hero">
+    <div class="hero-layout">
+
+      <!-- LEFT: intro text -->
+      <div class="hero-left">
+        <p class="eyebrow">Cost of Living Comparison</p>
+        <h1>What does your salary <span class="gt">actually buy</span> in each city?</h1>
+        <p>Compare the real cost of living between <strong>Riverside, CA</strong> and <strong>Dallas, TX</strong>. Enter your gross monthly salary — we'll calculate take-home pay under each state's tax rules and show you how far it goes after rent, utilities, groceries, and everyday expenses.</p>
+        <p style="font-size:13px;color:var(--tm);margin-top:8px;">Every line item in the tables below is adjustable — change quantities to match your household and all totals update live.</p>
+        <div class="feature-pills" style="margin-top:20px;">
+          <span class="fpill"><span class="fpill-dot"></span>Tax breakdown CA vs TX</span>
+          <span class="fpill"><span class="fpill-dot"></span>Adjustable grocery quantities</span>
+          <span class="fpill"><span class="fpill-dot"></span>Monthly surplus / deficit</span>
+          <span class="fpill"><span class="fpill-dot"></span>Annual savings estimate</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: salary card -->
+      <div>
+        <div class="salary-card">
+          <div class="salary-card-inner">
+            <h3>Enter gross monthly salary</h3>
+            <p class="sc-sub">We'll calculate take-home pay for both states using 2024 tax rates.</p>
+            <div class="salary-field">
+              <label for="salary-input">Monthly gross (USD)</label>
+              <div class="salary-input-wrap">
+                <span class="salary-prefix">$</span>
+                <input type="number" id="salary-input" placeholder="8,000" min="0" oninput="calcTakeHome()">
+              </div>
+            </div>
+            <p class="salary-note">2024 federal brackets · CA state tax (up to 12.3%) vs TX ($0) · SS 6.2% · Medicare 1.45% · Single filer, standard deduction.</p>
+
+            <!-- Quick result inside card -->
+            <div class="salary-quick" id="salary-quick">
+              <div class="sq-row"><span class="sq-label">CA take-home</span><span class="sq-val blue" id="sq-ca">—</span></div>
+              <div class="sq-row"><span class="sq-label">TX take-home</span><span class="sq-val blue" id="sq-tx">—</span></div>
+              <div class="sq-advantage">
+                <span id="sq-adv">—</span>
+                <p>more per month in Texas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</section>
+
+<hr class="g-hr">
+
+<!-- TAKE-HOME COLLAPSIBLE -->
+<div class="th-section" id="th-section">
+  <button class="th-toggle" id="th-toggle" onclick="toggleBreakdown()">
+    <div class="th-toggle-left">
+      <span class="th-toggle-label">Paycheck breakdown — detailed tax calculation</span>
+      <span class="th-toggle-sub" id="th-toggle-sub"></span>
+    </div>
+    <span class="th-chevron">▾</span>
+  </button>
+  <div class="th-body" id="th-body">
+    <div class="th-grid">
+      <div class="th-card">
+        <div class="th-card-title"><span class="city-dot ca-dot"></span>California — Riverside</div>
+        <div class="th-rows">
+          <div class="th-row"><span class="th-rl">Gross salary</span><span class="th-rv" id="ca-gross">—</span></div>
+          <div class="th-row"><span class="th-rl">Federal income tax<small>2024 brackets, $14,600 std deduction</small></span><span class="th-rv red" id="ca-fed">—</span></div>
+          <div class="th-row"><span class="th-rl">CA state income tax<small>Up to 12.3%, $5,202 std deduction</small></span><span class="th-rv red" id="ca-state">—</span></div>
+          <div class="th-row"><span class="th-rl">Social Security (6.2%)</span><span class="th-rv red" id="ca-ss">—</span></div>
+          <div class="th-row"><span class="th-rl">Medicare (1.45%)</span><span class="th-rv red" id="ca-med">—</span></div>
+          <div class="th-row hl"><span class="th-rl"><strong>Monthly take-home</strong></span><span class="th-rv blue" id="ca-takehome">—</span></div>
+        </div>
+      </div>
+      <div class="th-card">
+        <div class="th-card-title"><span class="city-dot tx-dot"></span>Texas — Dallas</div>
+        <div class="th-rows">
+          <div class="th-row"><span class="th-rl">Gross salary</span><span class="th-rv" id="tx-gross">—</span></div>
+          <div class="th-row"><span class="th-rl">Federal income tax<small>2024 brackets, $14,600 std deduction</small></span><span class="th-rv red" id="tx-fed">—</span></div>
+          <div class="th-row"><span class="th-rl">TX state income tax<small>Texas has no state income tax</small></span><span class="th-rv green">$0.00</span></div>
+          <div class="th-row"><span class="th-rl">Social Security (6.2%)</span><span class="th-rv red" id="tx-ss">—</span></div>
+          <div class="th-row"><span class="th-rl">Medicare (1.45%)</span><span class="th-rv red" id="tx-med">—</span></div>
+          <div class="th-row hl"><span class="th-rl"><strong>Monthly take-home</strong></span><span class="th-rv blue" id="tx-takehome">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIE CHARTS -->
+    <div class="charts-wrap" style="margin-bottom:0;">
+      <div class="chart-card">
+        <h3><span class="city-dot ca-dot"></span>California — salary breakdown</h3>
+        <div class="chart-body">
+          <div class="chart-canvas-wrap"><canvas id="pie-ca"></canvas></div>
+          <div class="chart-legend" id="legend-ca"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3><span class="city-dot tx-dot"></span>Texas — salary breakdown</h3>
+        <div class="chart-body">
+          <div class="chart-canvas-wrap"><canvas id="pie-tx"></canvas></div>
+          <div class="chart-legend" id="legend-tx"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SURPLUS BOXES (always visible once salary entered) -->
+<div id="surplus-section" style="display:none;background:var(--bg2);border-bottom:1px solid var(--bdr);padding:28px 40px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="surplus-grid">
+      <div class="sbox">
+        <div class="slabel">CA annual net surplus</div>
+        <div class="snum" id="surp-ca-ann">—</div>
+        <div class="snum-sub" id="surp-ca-sub"></div>
+      </div>
+      <div class="sbox">
+        <div class="slabel">TX annual net surplus</div>
+        <div class="snum" id="surp-tx-ann">—</div>
+        <div class="snum-sub" id="surp-tx-sub"></div>
+      </div>
+      <div class="sbox featured">
+        <div class="sbox-inner">
+          <div class="slabel">TX advantage — annually</div>
+          <div class="snum gn" id="surp-diff-ann">—</div>
+          <div class="snum-sub" id="surp-diff-sub">after all fixed expenses &amp; groceries</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="g-hr">
+
+<!-- FIXED EXPENSES TABLE -->
+<div style="background:var(--bg2);padding-bottom:48px;">
+<div class="container">
+  <div class="sec-hdr">
+    <p class="eyebrow">Fixed &amp; recurring</p>
+    <h2>Monthly Essentials</h2>
+    <p>Rent, utilities, transport, and lifestyle costs. These are fixed estimates — adjust in the grocery table below for variable items.</p>
+  </div>
+  <div class="fx-wrap">
+    <table class="fx-table">
+      <thead>
+        <tr>
+          <th style="width:32px">#</th>
+          <th>Expense</th>
+          <th class="r">Riverside, CA</th>
+          <th class="r">Dallas, TX</th>
+          <th class="r">Comparison</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:var(--tg);font-size:11px">01</td><td><strong style="font-weight:500;color:var(--tp)">Rent — modest 2 BHK</strong><div class="fn">Livingcost</div></td><td class="r">$2,500</td><td class="r">$1,639</td><td class="r"><span class="fxs">TX −$861</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">02</td><td><strong style="font-weight:500;color:var(--tp)">Utilities</strong><div class="fn">Electricity, water, gas</div></td><td class="r">$239</td><td class="r">$219</td><td class="r"><span class="fxs">TX −$20</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">03</td><td><strong style="font-weight:500;color:var(--tp)">Internet (50 Mbps+)</strong><div class="fn">Livingcost</div></td><td class="r">$71</td><td class="r">$63</td><td class="r"><span class="fxs">TX −$8</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">04</td><td><strong style="font-weight:500;color:var(--tp)">Cell phone (family plan)</strong><div class="fn">moveBuddha / national avg</div></td><td class="r">$70</td><td class="r">$75</td><td class="r"><span class="fxh">TX +$5</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">05</td><td><strong style="font-weight:500;color:var(--tp)">Netflix (standard)</strong></td><td class="r">$19</td><td class="r">$19</td><td class="r"><span class="fxn">—</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">06</td><td><strong style="font-weight:500;color:var(--tp)">Car maintenance</strong><div class="fn">Routine servicing estimate</div></td><td class="r">$80</td><td class="r">$80</td><td class="r"><span class="fxn">—</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">07</td><td><strong style="font-weight:500;color:var(--tp)">Gas / Petrol (~30 gal)</strong><div class="fn">$4.62/gal vs $2.99/gal</div></td><td class="r">$138</td><td class="r">$90</td><td class="r"><span class="fxs">TX −$48</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">08</td><td><strong style="font-weight:500;color:var(--tp)">Kid's sports club (1 child)</strong></td><td class="r">$150</td><td class="r">$60</td><td class="r"><span class="fxs">TX −$90</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">09</td><td><strong style="font-weight:500;color:var(--tp)">Eating out (2 family dinners)</strong><div class="fn">moveBuddha estimates</div></td><td class="r">$170</td><td class="r">$160</td><td class="r"><span class="fxs">TX −$10</span></td></tr>
+        <tr><td style="color:var(--tg);font-size:11px">10</td><td><strong style="font-weight:500;color:var(--tp)">Movie outing (family of 4)</strong><div class="fn">$17.40 × 4 vs $15 × 4</div></td><td class="r">$70</td><td class="r">$60</td><td class="r"><span class="fxs">TX −$10</span></td></tr>
+        <tr class="total-row">
+          <td></td>
+          <td style="font-size:13px;font-weight:600;color:var(--tp)">Fixed total (excl. groceries)</td>
+          <td class="r" style="font-size:15px;">$3,007</td>
+          <td class="r" style="font-size:15px;">$2,465</td>
+          <td class="r"><span class="fxs" style="font-size:11px;padding:3px 10px;">TX saves $542/mo</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<hr class="g-hr">
+
+<!-- GROCERY TABLE -->
+<div style="background:var(--bg);">
+<div class="container">
+  <div class="grocery-hdr">
+    <p class="eyebrow">Variable items</p>
+    <h2>Grocery &amp; Everyday Items</h2>
+    <p>Adjust quantities to match your household. The Δ column shows whether each item is cheaper or more expensive in Dallas vs Riverside. Totals update live.</p>
+  </div>
+</div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="fbar">
+  <div class="fbar-inner">
+    <div class="sw"><span class="si">⌕</span><input type="text" id="search" placeholder="Search items…" oninput="filterRows()"></div>
+    <div class="tc" id="cat-filters"></div>
+    <button class="rbtn" onclick="resetAll()">↺ Reset</button>
+  </div>
+</div>
+
+<!-- TABLE -->
+<section class="tsec">
+  <div class="tinner">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item</th>
+          <th>Category</th>
+          <th class="r">Riverside / unit</th>
+          <th class="r">Dallas / unit</th>
+          <th class="r">Qty / mo</th>
+          <th class="r">Riverside sub</th>
+          <th class="r">Dallas sub</th>
+          <th class="r">Δ CA vs TX</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- GROCERY SUMMARY STRIP -->
+<div class="groc-summary" id="groc-summary">
+  <div class="groc-sum-inner">
+    <div class="gsbox">
+      <span class="gsbox-label">Riverside total</span>
+      <span class="gsbox-val gv-ca" id="groc-ca-total">—</span>
+    </div>
+    <div class="gsbox-divider"></div>
+    <div class="gsbox">
+      <span class="gsbox-label">Dallas total</span>
+      <span class="gsbox-val gv-tx" id="groc-tx-total">—</span>
+    </div>
+    <div class="gsbox-divider"></div>
+    <div class="gsbox">
+      <span class="gsbox-label">Dallas saves</span>
+      <span class="gsbox-val gv-save" id="groc-diff">—</span>
+    </div>
+    <div class="gsbox-divider"></div>
+    <div class="gsbox">
+      <span class="gsbox-label">Items cheaper in Dallas</span>
+      <span class="gsbox-val" id="groc-cheaper-count" style="color:var(--green);">—</span>
+    </div>
+    <div class="gsbox-divider"></div>
+    <div class="gsbox">
+      <span class="gsbox-label">Items pricier in Dallas</span>
+      <span class="gsbox-val" id="groc-pricier-count" style="color:var(--red);">—</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <p>Tax estimates: 2024 federal brackets, single filer, standard deduction · CA state tax applied · TX $0 state income tax. All prices are midpoint estimates; actual costs vary.</p>
+    <span id="visible-count"></span>
+  </div>
+</footer>
+
+<script>
+/* ── TAX ENGINE ── */
+const FED_BRACKETS=[[11600,.10],[44725,.12],[95375,.22],[201050,.24],[383900,.32],[487450,.35],[Infinity,.37]];
+const FED_STD=14600;
+const CA_BRACKETS=[[10412,.01],[24684,.02],[38959,.04],[54081,.06],[68350,.08],[349137,.093],[418961,.103],[698274,.113],[Infinity,.123]];
+const CA_STD=5202;
+
+function taxBrackets(income,brackets){
+  let tax=0,prev=0;
+  for(const [lim,rate] of brackets){
+    if(income<=prev)break;
+    tax+=(Math.min(income,lim)-prev)*rate;
+    prev=lim;
+  }
+  return tax;
+}
+
+function calcAnnual(annualGross){
+  const fedTax=taxBrackets(Math.max(0,annualGross-FED_STD),FED_BRACKETS);
+  const caTax=taxBrackets(Math.max(0,annualGross-CA_STD),CA_BRACKETS);
+  const ss=Math.min(annualGross,168600)*.062;
+  const med=annualGross*.0145;
+  return{fedTax,caTax,ss,med};
+}
+
+const fmtK=n=>'$'+Math.round(Math.abs(n)).toLocaleString();
+const fmtD=n=>'$'+Math.abs(n).toFixed(2);
+
+/* stored take-home values for surplus calc */
+let caTH=0,txTH=0;
+const FIXED_CA=3007,FIXED_TX=2465;
+
+function calcTakeHome(){
+  const monthly=parseFloat(document.getElementById('salary-input').value)||0;
+  if(monthly<=0){
+    document.getElementById('th-section').classList.remove('visible');
+    document.getElementById('surplus-section').style.display='none';
+    document.getElementById('salary-quick').classList.remove('show');
+    caTH=0;txTH=0;
+    updateSurplus();
+    return;
+  }
+  const annual=monthly*12;
+  const{fedTax,caTax,ss,med}=calcAnnual(annual);
+  const mFed=fedTax/12,mSS=ss/12,mMed=med/12,mCa=caTax/12;
+  caTH=monthly-mFed-mCa-mSS-mMed;
+  txTH=monthly-mFed-mSS-mMed;
+
+  /* quick result in hero card */
+  document.getElementById('sq-ca').textContent=fmtK(caTH);
+  document.getElementById('sq-tx').textContent=fmtK(txTH);
+  const adv=txTH-caTH;
+  document.getElementById('sq-adv').textContent=fmtK(adv);
+  document.getElementById('salary-quick').classList.add('show');
+
+  /* detailed breakdown */
+  document.getElementById('ca-gross').textContent=fmtK(monthly);
+  document.getElementById('ca-fed').textContent='−'+fmtK(mFed);
+  document.getElementById('ca-state').textContent='−'+fmtK(mCa);
+  document.getElementById('ca-ss').textContent='−'+fmtK(mSS);
+  document.getElementById('ca-med').textContent='−'+fmtK(mMed);
+  document.getElementById('ca-takehome').textContent=fmtK(caTH);
+  document.getElementById('tx-gross').textContent=fmtK(monthly);
+  document.getElementById('tx-fed').textContent='−'+fmtK(mFed);
+  document.getElementById('tx-ss').textContent='−'+fmtK(mSS);
+  document.getElementById('tx-med').textContent='−'+fmtK(mMed);
+  document.getElementById('tx-takehome').textContent=fmtK(txTH);
+
+  /* update toggle sub */
+  document.getElementById('th-toggle-sub').textContent=`CA: ${fmtK(caTH)}/mo · TX: ${fmtK(txTH)}/mo`;
+
+  /* draw pie charts */
+  let grocCA=0,grocTX=0;
+  ITEMS.forEach(it=>{grocCA+=quantities[it.id]*it.irvine;grocTX+=quantities[it.id]*it.dallas;});
+  drawPie('pie-ca','legend-ca',monthly,[
+    {label:'Federal tax',val:mFed,color:'#FCE8E6',tc:'#C5221F'},
+    {label:'CA state tax',val:mCa,color:'#fde2fd',tc:'#b84dc6'},
+    {label:'SS + Medicare',val:mSS+mMed,color:'#FFF3E0',tc:'#E65100'},
+    {label:'Fixed expenses',val:Math.min(FIXED_CA,caTH),color:'#E8EAED',tc:'#5F6368'},
+    {label:'Groceries',val:Math.min(grocCA,Math.max(0,caTH-FIXED_CA)),color:'#E3F2FD',tc:'#1A73E8'},
+    ...(caTH-FIXED_CA-grocCA>0?[{label:'Surplus',val:caTH-FIXED_CA-grocCA,color:'#E6F4EA',tc:'#137333'}]:[]),
+    ...(caTH-FIXED_CA-grocCA<0?[{label:'Shortfall',val:Math.abs(caTH-FIXED_CA-grocCA),color:'#FCE8E6',tc:'#C5221F'}]:[]),
+  ],'ca');
+  drawPie('pie-tx','legend-tx',monthly,[
+    {label:'Federal tax',val:mFed,color:'#FCE8E6',tc:'#C5221F'},
+    {label:'TX state tax',val:0,color:'#E6F4EA',tc:'#137333'},
+    {label:'SS + Medicare',val:mSS+mMed,color:'#FFF3E0',tc:'#E65100'},
+    {label:'Fixed expenses',val:Math.min(FIXED_TX,txTH),color:'#E8EAED',tc:'#5F6368'},
+    {label:'Groceries',val:Math.min(grocTX,Math.max(0,txTH-FIXED_TX)),color:'#E3F2FD',tc:'#1A73E8'},
+    ...(txTH-FIXED_TX-grocTX>0?[{label:'Surplus',val:txTH-FIXED_TX-grocTX,color:'#E8F0FE',tc:'#1A73E8'}]:[]),
+    ...(txTH-FIXED_TX-grocTX<0?[{label:'Shortfall',val:Math.abs(txTH-FIXED_TX-grocTX),color:'#FCE8E6',tc:'#C5221F'}]:[]),
+  ],'tx');
+
+  document.getElementById('th-section').classList.add('visible');
+  document.getElementById('surplus-section').style.display='block';
+  updateSurplus();
+}
+
+function drawPie(canvasId,legendId,total,slices,key){
+  const vis=slices.filter(s=>s.val>0.01);
+  if(window[`_chart_${key}`])window[`_chart_${key}`].destroy();
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  window[`_chart_${key}`]=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:vis.map(s=>s.label),datasets:[{data:vis.map(s=>parseFloat(s.val.toFixed(2))),backgroundColor:vis.map(s=>s.color),borderColor:vis.map(s=>s.tc),borderWidth:1.5,hoverOffset:5}]},
+    options:{cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const pct=(c.raw/total*100).toFixed(1);return` ${fmtK(c.raw)} (${pct}%)`;
+    }}}},animation:{duration:350}}
+  });
+  const leg=document.getElementById(legendId);leg.innerHTML='';
+  vis.forEach(s=>{const pct=(s.val/total*100).toFixed(1);leg.innerHTML+=`<div class="leg-item"><span class="leg-dot" style="background:${s.color};border:1px solid ${s.tc}"></span><span class="leg-name">${s.label}</span><span class="leg-val">${fmtK(s.val)}<span class="leg-pct">${pct}%</span></span></div>`;});
+}
+
+function toggleBreakdown(){
+  const tog=document.getElementById('th-toggle');
+  const body=document.getElementById('th-body');
+  tog.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+/* ── SURPLUS (uses live grocery totals) ── */
+function updateSurplus(){
+  if(caTH===0&&txTH===0){return;}
+  let grocCA=0,grocTX=0;
+  ITEMS.forEach(it=>{grocCA+=quantities[it.id]*it.irvine;grocTX+=quantities[it.id]*it.dallas;});
+
+  const caMonthly=caTH-FIXED_CA-grocCA;
+  const txMonthly=txTH-FIXED_TX-grocTX;
+  const caAnn=caMonthly*12;
+  const txAnn=txMonthly*12;
+  const diffAnn=txAnn-caAnn;
+
+  const caEl=document.getElementById('surp-ca-ann');
+  caEl.textContent=fmtK(caAnn)+(caAnn>=0?'/yr':'/yr shortfall');
+  caEl.className='snum '+(caAnn>=0?'pos':'neg');
+  document.getElementById('surp-ca-sub').textContent=fmtK(caMonthly)+'/mo after all expenses';
+
+  const txEl=document.getElementById('surp-tx-ann');
+  txEl.textContent=fmtK(txAnn)+(txAnn>=0?'/yr':'/yr shortfall');
+  txEl.className='snum '+(txAnn>=0?'pos':'neg');
+  document.getElementById('surp-tx-sub').textContent=fmtK(txMonthly)+'/mo after all expenses';
+
+  const diffEl=document.getElementById('surp-diff-ann');
+  diffEl.textContent=(diffAnn>=0?'+':'')+fmtK(diffAnn)+'/yr';
+  diffEl.className='snum '+(diffAnn>=0?'gn':'neg');
+}
+
+/* ── GROCERY DATA ── */
+const ITEMS=[
+  {id:1,name:"Milk (1 gallon)",cat:"Dairy",irvine:4.50,dallas:4.00,defaultQty:4},
+  {id:2,name:"Eggs (dozen)",cat:"Dairy",irvine:5.50,dallas:4.87,defaultQty:8},
+  {id:3,name:"Bread (loaf)",cat:"Bakery",irvine:5.75,dallas:3.57,defaultQty:8},
+  {id:4,name:"White rice (1kg)",cat:"Pantry",irvine:4.35,dallas:4.96,defaultQty:2},
+  {id:5,name:"Chicken fillets (1kg)",cat:"Meat",irvine:20.64,dallas:14.36,defaultQty:4},
+  {id:6,name:"Ground beef (1kg)",cat:"Meat",irvine:14.54,dallas:18.72,defaultQty:2},
+  {id:7,name:"Apples (1kg)",cat:"Produce",irvine:5.51,dallas:5.21,defaultQty:4},
+  {id:8,name:"Bananas (1kg)",cat:"Produce",irvine:1.75,dallas:1.65,defaultQty:3},
+  {id:9,name:"Oranges (1kg)",cat:"Produce",irvine:3.97,dallas:4.61,defaultQty:3},
+  {id:10,name:"Tomatoes (1kg)",cat:"Produce",irvine:6.53,dallas:3.85,defaultQty:3},
+  {id:11,name:"Potatoes (1kg)",cat:"Produce",irvine:3.59,dallas:2.38,defaultQty:4},
+  {id:12,name:"Onions (1kg)",cat:"Produce",irvine:3.01,dallas:3.22,defaultQty:3},
+  {id:13,name:"Lettuce (head)",cat:"Produce",irvine:2.33,dallas:1.83,defaultQty:4},
+  {id:14,name:"Bottled water (1.5L)",cat:"Beverages",irvine:2.25,dallas:2.58,defaultQty:12},
+  {id:15,name:"Coffee (ground)",cat:"Beverages",irvine:8.50,dallas:7.00,defaultQty:1},
+  {id:16,name:"Tea (box)",cat:"Beverages",irvine:5.00,dallas:4.50,defaultQty:2},
+  {id:17,name:"Sugar (4 lbs)",cat:"Pantry",irvine:5.00,dallas:4.50,defaultQty:1},
+  {id:18,name:"Flour (5 lbs)",cat:"Pantry",irvine:4.00,dallas:3.50,defaultQty:1},
+  {id:19,name:"Pasta (1 lb)",cat:"Pantry",irvine:3.50,dallas:3.50,defaultQty:4},
+  {id:20,name:"Cereal (box)",cat:"Pantry",irvine:4.00,dallas:4.00,defaultQty:4},
+  {id:21,name:"Cooking oil (1L)",cat:"Pantry",irvine:7.00,dallas:7.00,defaultQty:2},
+  {id:22,name:"Butter (lb)",cat:"Dairy",irvine:6.00,dallas:6.00,defaultQty:2},
+  {id:23,name:"Cheese (1kg)",cat:"Dairy",irvine:12.45,dallas:13.38,defaultQty:2},
+  {id:24,name:"Yogurt (multipack)",cat:"Dairy",irvine:6.00,dallas:6.00,defaultQty:2},
+  {id:25,name:"Toilet paper (12 rolls)",cat:"Household",irvine:10.00,dallas:8.00,defaultQty:1},
+  {id:26,name:"Paper towels",cat:"Household",irvine:6.50,dallas:5.50,defaultQty:2},
+  {id:27,name:"Laundry detergent",cat:"Household",irvine:12.50,dallas:10.00,defaultQty:1},
+  {id:28,name:"Dish soap",cat:"Household",irvine:4.00,dallas:4.00,defaultQty:1},
+  {id:29,name:"Toothpaste",cat:"Personal Care",irvine:4.00,dallas:4.00,defaultQty:2},
+  {id:30,name:"Shampoo",cat:"Personal Care",irvine:6.50,dallas:6.50,defaultQty:2},
+  {id:31,name:"Soap / body wash",cat:"Personal Care",irvine:5.00,dallas:4.50,defaultQty:4},
+  {id:32,name:"Toothbrushes",cat:"Personal Care",irvine:3.00,dallas:3.00,defaultQty:4},
+  {id:33,name:"Trash bags",cat:"Household",irvine:10.00,dallas:8.50,defaultQty:1},
+  {id:34,name:"Diapers (pack)",cat:"Baby",irvine:37.50,dallas:32.50,defaultQty:3},
+  {id:35,name:"Baby wipes (pack)",cat:"Baby",irvine:12.50,dallas:10.00,defaultQty:2},
+  {id:36,name:"Gas (gallon)",cat:"Auto",irvine:4.20,dallas:3.25,defaultQty:40},
+  {id:38,name:"Tooth floss",cat:"Personal Care",irvine:4.00,dallas:4.00,defaultQty:1},
+  {id:39,name:"Deodorant",cat:"Personal Care",irvine:6.00,dallas:6.00,defaultQty:2},
+  {id:40,name:"Razors / blades",cat:"Personal Care",irvine:10.00,dallas:8.50,defaultQty:1},
+  {id:41,name:"Sunscreen",cat:"Health",irvine:10.00,dallas:10.00,defaultQty:1},
+  {id:42,name:"Vitamins",cat:"Health",irvine:12.50,dallas:12.50,defaultQty:1},
+  {id:43,name:"First-aid supplies",cat:"Health",irvine:12.50,dallas:12.50,defaultQty:1},
+  {id:44,name:"Pet food (large bag)",cat:"Pet",irvine:40.00,dallas:32.50,defaultQty:2},
+  {id:45,name:"Bread spreads (jam/PB)",cat:"Pantry",irvine:5.00,dallas:5.00,defaultQty:2},
+  {id:46,name:"Snacks / chips (pack)",cat:"Snacks",irvine:3.25,dallas:2.50,defaultQty:8},
+  {id:47,name:"Canned goods",cat:"Pantry",irvine:1.60,dallas:1.40,defaultQty:10},
+  {id:48,name:"Frozen vegetables (bag)",cat:"Frozen",irvine:2.50,dallas:2.50,defaultQty:4},
+  {id:49,name:"Cleaning spray",cat:"Household",irvine:4.00,dallas:4.00,defaultQty:1},
+  {id:50,name:"Multi-purpose cleaner",cat:"Household",irvine:6.50,dallas:6.50,defaultQty:1},
+];
+
+const CATS=[...new Set(ITEMS.map(i=>i.cat))].sort();
+let activeCat='all',quantities={};
+ITEMS.forEach(it=>quantities[it.id]=it.defaultQty);
+const fmt=n=>'$'+n.toFixed(2);
+
+function buildCatFilters(){
+  const w=document.getElementById('cat-filters');
+  w.innerHTML=`<button class="tp active" onclick="setCat('all',this)">All</button>`;
+  CATS.forEach(cat=>{const b=document.createElement('button');b.className='tp';b.textContent=cat;b.onclick=()=>setCat(cat,b);w.appendChild(b);});
+}
+function setCat(cat,btn){activeCat=cat;document.querySelectorAll('.tp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterRows();}
+
+function buildTable(){
+  const tb=document.getElementById('table-body');tb.innerHTML='';
+  ITEMS.forEach(item=>{
+    const tr=document.createElement('tr');tr.id=`row-${item.id}`;
+    tr.innerHTML=`
+      <td><span class="inum">${String(item.id).padStart(2,'0')}</span></td>
+      <td class="iname">${item.name}</td>
+      <td><span class="ctag">${item.cat}</span></td>
+      <td class="pc">${fmt(item.irvine)}</td>
+      <td class="pc">${fmt(item.dallas)}</td>
+      <td class="qc"><div class="qw">
+        <button class="qbtn" onclick="adj(${item.id},-1)">−</button>
+        <input class="qin" type="number" min="0" max="999" value="${quantities[item.id]}" id="qty-${item.id}" onchange="setQ(${item.id},this.value)">
+        <button class="qbtn" onclick="adj(${item.id},1)">+</button>
+      </div></td>
+      <td class="sc" id="si-${item.id}"></td>
+      <td class="sc" id="sd-${item.id}"></td>
+      <td class="dc" id="dlt-${item.id}"></td>`;
+    tb.appendChild(tr);
+  });
+  updateGrocery();
+}
+
+function adj(id,d){quantities[id]=Math.max(0,(quantities[id]||0)+d);const inp=document.getElementById(`qty-${id}`);if(inp)inp.value=quantities[id];updateGrocery();}
+function setQ(id,v){quantities[id]=Math.max(0,parseInt(v)||0);updateGrocery();}
+
+function updateGrocery(){
+  let totCA=0,totTX=0,cheaper=0,pricier=0;
+  ITEMS.forEach(item=>{
+    const q=quantities[item.id];
+    const sI=q*item.irvine,sD=q*item.dallas;
+    totCA+=sI;totTX+=sD;
+    const si=document.getElementById(`si-${item.id}`);
+    const sd=document.getElementById(`sd-${item.id}`);
+    const de=document.getElementById(`dlt-${item.id}`);
+    if(si)si.textContent=fmt(sI);
+    if(sd)sd.textContent=fmt(sD);
+    if(de){
+      // delta = Dallas - Riverside per unit (not quantity-adjusted for badge, but show sub-total diff)
+      const unitDiff=item.dallas-item.irvine; // negative = cheaper in dallas
+      const subDiff=sD-sI;
+      if(Math.abs(unitDiff)<0.001){de.innerHTML='<span class="dzero">—</span>';}
+      else if(unitDiff<0){
+        cheaper++;
+        de.innerHTML=`<span class="dbadge cheaper">TX −${fmt(Math.abs(subDiff))}</span>`;
+      }else{
+        pricier++;
+        de.innerHTML=`<span class="dbadge pricier">TX +${fmt(subDiff)}</span>`;
+      }
+    }
+  });
+
+  // Update summary strip
+  document.getElementById('groc-ca-total').textContent=fmt(totCA);
+  document.getElementById('groc-tx-total').textContent=fmt(totTX);
+  const diff=totCA-totTX;
+  const diffEl=document.getElementById('groc-diff');
+  if(diff>0){diffEl.textContent=fmt(diff)+'/mo';diffEl.style.color='var(--green)';}
+  else if(diff<0){diffEl.textContent=fmt(Math.abs(diff))+' more/mo';diffEl.style.color='var(--red)';}
+  else{diffEl.textContent='—';}
+  document.getElementById('groc-cheaper-count').textContent=cheaper;
+  document.getElementById('groc-pricier-count').textContent=pricier;
+
+  // trigger surplus update if salary entered
+  updateSurplus();
+  // redraw charts if salary visible
+  const sal=parseFloat(document.getElementById('salary-input').value)||0;
+  if(sal>0)calcTakeHome();
+}
+
+function filterRows(){
+  const q=document.getElementById('search').value.toLowerCase();
+  let v=0;
+  ITEMS.forEach(item=>{
+    const row=document.getElementById(`row-${item.id}`);
+    const mc=activeCat==='all'||item.cat===activeCat;
+    const ms=item.name.toLowerCase().includes(q)||item.cat.toLowerCase().includes(q);
+    if(mc&&ms){row.classList.remove('hidden');v++;}else row.classList.add('hidden');
+  });
+  document.getElementById('visible-count').textContent=`${v} of ${ITEMS.length} items`;
+}
+
+function resetAll(){
+  ITEMS.forEach(item=>{quantities[item.id]=item.defaultQty;const inp=document.getElementById(`qty-${item.id}`);if(inp)inp.value=item.defaultQty;});
+  document.getElementById('search').value='';activeCat='all';
+  document.querySelectorAll('.tp').forEach((b,i)=>b.classList.toggle('active',i===0));
+  filterRows();updateGrocery();
+}
+
+buildCatFilters();buildTable();filterRows();
+</script>
+</body>
+</html>
